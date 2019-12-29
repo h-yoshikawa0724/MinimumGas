@@ -7,4 +7,4 @@ Qiitaいいねランキングの取得に関しては、以下のAPIを利用
   - YYYY-MM-DD：実行日の前日
 
 上位20の記事が表示される
-<img src="/QiitaRanking/ranking.png">
+<img src="./ranking.png">
