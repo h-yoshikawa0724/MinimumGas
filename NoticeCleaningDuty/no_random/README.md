@@ -8,13 +8,13 @@
 
 ### 連携シート
 「掃除当番表・抽選無し」という名称の以下のシート  
-<img src="/NoticeCleaningDuty/no_random_one/group.png">
+<img src="./group.png">
 
 ### ライブラリ
 Underscore：M3i7wmUA_5n0NSEaa6NnNqOBao7QLBR4j
 
 ### 通知内容
-<img src="/NoticeCleaningDuty/no_random_one/result.png">
+<img src="./result.png">
 
 ### エラー通知例
-<img src="/NoticeCleaningDuty/no_random_one/error.png">
+<img src="./error.png">

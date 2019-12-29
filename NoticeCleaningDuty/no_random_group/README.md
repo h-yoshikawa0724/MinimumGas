@@ -5,7 +5,7 @@
 
 ### 連携シート
 「グループ表」という名称の以下のシート  
-<img src="/NoticeCleaningDuty/no_random_two/group.png">
+<img src="./group.png">
 
 ### 通知内容
-<img src="/NoticeCleaningDuty/no_random_two/result.png">
+<img src="./result.png">
