@@ -24,7 +24,7 @@ PropertiesService.getScriptProperties().getProperty('プロパティ名');
 ```
 
 ### Clasp
-[GitHub - clasp](https://github.com/google/clasp)
+[GitHub - clasp](https://github.com/google/clasp)  
 GASをローカルで開発したい時に使えるCLIツール。
 
 #### インストール
