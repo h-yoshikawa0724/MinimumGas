@@ -12,11 +12,11 @@ function doPost(e) {
 // スプレッドシートのデータを元に当番ガチャを行い、結果をSlackに投稿する
 function dutyGacha() {
   // メンバー表のデータ部分のセル範囲
-  const memberDataCellRange = 'A4:B23';
+  const memberDataCellRange = 'A4:C23';
   // 当番履歴表の開始列
-  const historyDataColumnRangeStart = 'D';
+  const historyDataColumnRangeStart = 'E';
   // 当番履歴表の終了列
-  const historyDataColumnRangeEnd = 'F';
+  const historyDataColumnRangeEnd = 'G';
   // 当番履歴表の列範囲
   const historyDataColumnRange = historyDataColumnRangeStart + ':' + historyDataColumnRangeEnd;
   // ガチャから除外する履歴件数
@@ -34,7 +34,10 @@ function dutyGacha() {
     const insertRow = sheet.getRange(historyDataColumnRangeStart + sheet.getMaxRows()).getNextDataCell(SpreadsheetApp.Direction.UP).getRow() + 1;
     const insertRange = historyDataColumnRangeStart + insertRow + ':' + historyDataColumnRangeEnd + insertRow;
     const insertDataArr = createInsertData(dutyMemberList);
+    // スプレッドシートに当月当番データを書き込み
     sheet.getRange(insertRange).setValues(insertDataArr);
+    // スプレッドシートに書き込んだ行に罫線を引く
+    sheet.getRange(insertRange).setBorder(false, true, true, true, true, false);
   } catch (e) {
     var msg = 'エラーが発生しました：' + e.message + '\nfileName：' + e.fileName + '\nlineNumber：' + e.lineNumber + '\nstack：\n' + e.stack;
     Logger.log(msg);
@@ -59,13 +62,13 @@ function dutyGacha() {
   }
 }
 
-// メンバー表からガチャ参加メンバーを抽出して配列で返す
+// メンバー表からガチャ参加メンバーのslack_idと名前を抽出して、オブジェクトの配列で返す
 function getJoinMemberList(sheet, memberDataCellRange, dutyMemberNum) {
   const memberData = sheet.getRange(memberDataCellRange).getValues();
   var joinMemberList = [];
   memberData.map(function(data){
     if (data[0] === '〇') {
-      joinMemberList.push(data[1]);
+      joinMemberList.push({id: data[1], name: data[2]});
     }
   });
   if (joinMemberList.length < dutyMemberNum) {
@@ -97,9 +100,9 @@ function getHistoryMemberList(sheet, historyDataColumnRange, historyDataTargetNu
 
 // ガチャ参加メンバーから履歴メンバーを除外したものを配列で返す
 function getGachaMemberList(joinMemberList, historyMenberList, dutyMemberNum) {
-  const gachaMemberList = joinMemberList.filter(function(data){ return historyMenberList.indexOf(data) === -1});
+  const gachaMemberList = joinMemberList.filter(function(data){ return historyMenberList.indexOf(data.name) === -1});
   if (gachaMemberList.length < dutyMemberNum) {
-    throw new Error('ガチャ参加メンバーから履歴メンバーを除外した数が、抽選メンバー数より少ないです。ガチャ参加メンバーを増やしてください。');
+    throw new Error('ガチャ参加メンバーから履歴メンバーを除外した数が、抽選メンバー数より少ないです。ガチャ参加メンバーを増やしてください。'); 
   }
   return gachaMemberList;
 }
@@ -126,16 +129,18 @@ function random(length) {
 // Slack通知メッセージを作成して返す
 function createNoticeMsg(gachaMenber, dutyMemberList) {
   var noticeMsg = '';
-  dutyMemberList.forEach(function(member) {
-    noticeMsg += ":penguin:<ﾃﾞﾚﾚﾚﾚﾚﾃﾞﾃﾞﾝ!!　" + member + 'さん\n';
+  dutyMemberList.forEach(function(memberData) {
+    noticeMsg += ":penguin:<ﾃﾞﾚﾚﾚﾚﾚﾃﾞﾃﾞﾝ!!　" + "<" + memberData.id + "> さん\n";
   });
   return noticeMsg;
 }
 
-// スプレッドシートに記録する当月データの配列を返す
+// スプレッドシートに記録する当月データの二次元配列を返す
 function createInsertData(dutyMemberList) {
   var insertData = [Utilities.formatDate(new Date(), "JST", "yyyy/MM")];
-  insertData = insertData.concat(dutyMemberList);
+  dutyMemberList.forEach(function(memberData) {
+    insertData.push(memberData.name);
+  });
   const insertDataArr = [insertData];
   return insertDataArr;
 }

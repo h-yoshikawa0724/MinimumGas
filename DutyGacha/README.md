@@ -13,13 +13,13 @@ OutgoingWebhookと連携させることで、Slackからトリガーワードで
 dutyGacha関数の最初に定義している以下の変数の値を、シートや状況に合わせて指定しておく。
 
 - memberDataCellRange
-　メンバー表のデータ部分のセル範囲（デフォルトはA4:B23）
+　メンバー表のデータ部分のセル範囲（デフォルトはA4:C23）
 
 - historyDataColumnRangeStart
-　当番履歴表の開始列（デフォルトはD）
+　当番履歴表の開始列（デフォルトはE）
 
 - historyDataColumnRangeEnd
-　当番履歴表の終了列（デフォルトはF）
+　当番履歴表の終了列（デフォルトはG）
 
 - historyDataTargetNum
 　過去何件分の履歴をガチャから除外するか（デフォルトは5）
