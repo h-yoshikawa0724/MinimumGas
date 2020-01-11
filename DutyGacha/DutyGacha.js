@@ -21,7 +21,7 @@ function dutyGacha() {
   const historyDataColumnRange = historyDataColumnRangeStart + ':' + historyDataColumnRangeEnd;
   // ガチャから除外する履歴件数
   const historyDataTargetNum = 5;
-  // 当番抽選の人数
+  // 抽選する当番の人数
   const dutyMemberNum = 2;
   try {
     const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('当番履歴表');
@@ -72,7 +72,7 @@ function getJoinMemberList(sheet, memberDataCellRange, dutyMemberNum) {
     }
   });
   if (joinMemberList.length < dutyMemberNum) {
-    throw new Error('ガチャ参加メンバーが当番抽選メンバー数より少ないです。ガチャ参加メンバーを増やしてください。');
+    throw new Error('ガチャ参加メンバーが抽選する当番の人数より少ないです。ガチャ参加メンバーを増やしてください。');
   }
   return joinMemberList;
 }
@@ -102,12 +102,12 @@ function getHistoryMemberList(sheet, historyDataColumnRange, historyDataTargetNu
 function getGachaMemberList(joinMemberList, historyMenberList, dutyMemberNum) {
   const gachaMemberList = joinMemberList.filter(function(data){ return historyMenberList.indexOf(data.name) === -1});
   if (gachaMemberList.length < dutyMemberNum) {
-    throw new Error('ガチャ参加メンバーから履歴メンバーを除外した数が、抽選メンバー数より少ないです。ガチャ参加メンバーを増やしてください。'); 
+    throw new Error('ガチャ参加メンバーから履歴メンバーを除外した数が、抽選する当番の人数より少ないです。ガチャ参加メンバーを増やしてください。'); 
   }
   return gachaMemberList;
 }
 
-// 当番抽選メンバー数分、当番抽選を行い、当月の当番メンバーの配列を返す
+// 抽選する当番人数分、当番抽選を行い、当月の当番メンバーの配列を返す
 function getDutyMemberList(gachaMenberList, dutyMemberNum) {
   var dutyMemberList = [];
   for (var i = 0; i < dutyMemberNum; i++) {
