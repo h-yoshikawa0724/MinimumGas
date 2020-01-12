@@ -1,6 +1,6 @@
 // POSTリクエスト時に当番ガチャを実行する
-// （トークン認証を行い、特定のSlackチャンネルからのリクエストのみ受付）
 function doPost(e) {
+  // トークン認証を行い、特定のSlackチャンネルからのリクエストのみ受付
   const verifyToken = PropertiesService.getScriptProperties().getProperty('SLACK_OUTGOING_TOKEN');
 
   if (verifyToken !== e.parameter.token) {
@@ -130,7 +130,7 @@ function random(length) {
 function createNoticeMsg(gachaMenber, dutyMemberList) {
   var noticeMsg = '';
   dutyMemberList.forEach(function(memberData) {
-    noticeMsg += ":penguin:<ﾃﾞﾚﾚﾚﾚﾚﾃﾞﾃﾞﾝ!!　" + "<" + memberData.id + "> さん\n";
+    noticeMsg += ':penguin:<ﾃﾞﾚﾚﾚﾚﾚﾃﾞﾃﾞﾝ!!　<' + memberData.id + '> さん\n';
   });
   return noticeMsg;
 }
