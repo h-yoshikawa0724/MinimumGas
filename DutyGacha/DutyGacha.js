@@ -25,19 +25,30 @@ function dutyGacha() {
   const dutyMemberNum = 2;
   try {
     const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('当番履歴表');
-    const joinMemberList = getJoinMemberList(sheet, memberDataCellRange, dutyMemberNum);
-    const historyMenberList = getHistoryMemberList(sheet, historyDataColumnRange, historyDataTargetNum, dutyMemberNum);
-    const gachaMemberList = getGachaMemberList(joinMemberList, historyMenberList, dutyMemberNum);
-    const dutyMemberList = getDutyMemberList(gachaMemberList, dutyMemberNum);
-    var msg = createNoticeMsg(gachaMemberList, dutyMemberList);
+    const filterHistoryData = getFilterHistoryData(sheet, historyDataColumnRange);
+    const lastIndex = filterHistoryData.length - 1;
+    const thisMonthMemberNameList = getThisMonthMemberNameList(filterHistoryData, lastIndex, dutyMemberNum);
+    var noticeMemberList;
+    // 当月の当番履歴情報がすでにある場合はそのメンバーの情報を取得
+    if (thisMonthMemberNameList !== null) {
+      noticeMemberList = getThisMonthMemberList(sheet, memberDataCellRange, thisMonthMemberNameList, dutyMemberNum);
+    // ない場合は抽選に必要な情報を取得し、抽選を行い、スプレッドシートに書き込み
+    } else {
+      const joinMemberList = getJoinMemberList(sheet, memberDataCellRange, dutyMemberNum);
+      const historyMenberList = getHistoryMemberList(filterHistoryData, lastIndex, historyDataTargetNum, dutyMemberNum);
+      const gachaMemberList = getGachaMemberList(joinMemberList, historyMenberList, dutyMemberNum);
+      noticeMemberList = getDutyMemberList(gachaMemberList, dutyMemberNum);
 
-    const insertRow = sheet.getRange(historyDataColumnRangeStart + sheet.getMaxRows()).getNextDataCell(SpreadsheetApp.Direction.UP).getRow() + 1;
-    const insertRange = historyDataColumnRangeStart + insertRow + ':' + historyDataColumnRangeEnd + insertRow;
-    const insertDataArr = createInsertData(dutyMemberList);
-    // スプレッドシートに当月当番データを書き込み
-    sheet.getRange(insertRange).setValues(insertDataArr);
-    // スプレッドシートに書き込んだ行に罫線を引く
-    sheet.getRange(insertRange).setBorder(false, true, true, true, true, false);
+      const insertRow = sheet.getRange(historyDataColumnRangeStart + sheet.getMaxRows()).getNextDataCell(SpreadsheetApp.Direction.UP).getRow() + 1;
+      const insertRange = historyDataColumnRangeStart + insertRow + ':' + historyDataColumnRangeEnd + insertRow;
+      const insertDataArr = createInsertData(noticeMemberList);
+      // スプレッドシートに当月当番データを書き込み
+      sheet.getRange(insertRange).setValues(insertDataArr);
+      // スプレッドシートに書き込んだ行に罫線を引く
+      sheet.getRange(insertRange).setBorder(false, true, true, true, true, false);
+    }
+    var msg = createNoticeMsg(noticeMemberList);
+
   } catch (e) {
     var msg = 'エラーが発生しました：' + e.message + '\nfileName：' + e.fileName + '\nlineNumber：' + e.lineNumber + '\nstack：\n' + e.stack;
     Logger.log(msg);
@@ -62,6 +73,39 @@ function dutyGacha() {
   }
 }
 
+// 当番履歴表の列のデータから空白セルを除いたものを返す
+function getFilterHistoryData(sheet, historyDataColumnRange) {
+  const range = sheet.getRange(historyDataColumnRange);
+  const historyData = range.getValues();
+  return historyData.filter(function(data) { return data[0] !== ''});
+}
+
+// 当番履歴表に当月当番の情報があればそのメンバー名を、なければnullを返す
+function getThisMonthMemberNameList(filterHistoryData, lastIndex, dutyMemberNum) {
+  if (Utilities.formatDate(filterHistoryData[lastIndex][0], "JST", "yyyy/MM")
+                           === Utilities.formatDate(new Date(), "JST", "yyyy/MM")) {
+    const historyDataTargetNum = 1;
+    return getHistoryMemberList(filterHistoryData, lastIndex, historyDataTargetNum, dutyMemberNum);
+  } else {
+    return null;
+  }
+}
+
+// メンバー表から当月当番メンバーのslack_idと名前を抽出して、オブジェクトの配列で返す
+function getThisMonthMemberList(sheet, memberDataCellRange, thisMonthMemberNameList, dutyMemberNum) {
+  const memberData = sheet.getRange(memberDataCellRange).getValues();
+  var thisMonthMemberList = [];
+  memberData.map(function(data){
+    if (thisMonthMemberNameList.indexOf(data[2]) !== -1) {
+      thisMonthMemberList.push({id: data[1], name: data[2]});
+    }
+  });
+  if (thisMonthMemberList.length < dutyMemberNum) {
+    throw new Error('当月当番メンバーの情報がメンバー表に不足しています。');
+  }
+  return thisMonthMemberList;
+}
+
 // メンバー表からガチャ参加メンバーのslack_idと名前を抽出して、オブジェクトの配列で返す
 function getJoinMemberList(sheet, memberDataCellRange, dutyMemberNum) {
   const memberData = sheet.getRange(memberDataCellRange).getValues();
@@ -78,11 +122,7 @@ function getJoinMemberList(sheet, memberDataCellRange, dutyMemberNum) {
 }
 
 // 当番履歴表から指定件数分の履歴メンバーを抽出して配列で返す
-function getHistoryMemberList(sheet, historyDataColumnRange, historyDataTargetNum, dutyMemberNum) {
-  const range = sheet.getRange(historyDataColumnRange);
-  const historyData = range.getValues();
-  const filterHistoryData = historyData.filter(function(data) { return data[0] !== ''});
-  const lastIndex = filterHistoryData.length - 1;
+function getHistoryMemberList(filterHistoryData, lastIndex, historyDataTargetNum, dutyMemberNum) {
   var historyMenberList = [];
   for (var i = 0; i < historyDataTargetNum; i++) {
     for (var l = 1; l <= dutyMemberNum; l++) {
@@ -127,7 +167,7 @@ function random(length) {
 }
 
 // Slack通知メッセージを作成して返す
-function createNoticeMsg(gachaMenber, dutyMemberList) {
+function createNoticeMsg(dutyMemberList) {
   var noticeMsg = '';
   dutyMemberList.forEach(function(memberData) {
     noticeMsg += ':penguin:<ﾃﾞﾚﾚﾚﾚﾚﾃﾞﾃﾞﾝ!!　<' + memberData.id + '> さん\n';
