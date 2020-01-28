@@ -28,27 +28,27 @@ function dutyGacha() {
     const filterHistoryData = getFilterHistoryData(sheet, historyDataColumnRange);
     const lastIndex = filterHistoryData.length - 1;
     const thisMonthMemberNameList = getThisMonthMemberNameList(filterHistoryData, lastIndex, dutyMemberNum);
-    var noticeMemberList;
+    var msg;
     // 当月の当番履歴情報がすでにある場合はそのメンバーの情報を取得
     if (thisMonthMemberNameList !== null) {
-      noticeMemberList = getThisMonthMemberList(sheet, memberDataCellRange, thisMonthMemberNameList, dutyMemberNum);
+      const thisMonthMemberList = getThisMonthMemberList(sheet, memberDataCellRange, thisMonthMemberNameList, dutyMemberNum);
+      msg = createNoticeMsg(thisMonthMemberList, false);
     // ない場合は抽選に必要な情報を取得し、抽選を行い、スプレッドシートに書き込み
     } else {
       const joinMemberList = getJoinMemberList(sheet, memberDataCellRange, dutyMemberNum);
       const historyMenberList = getHistoryMemberList(filterHistoryData, lastIndex, historyDataTargetNum, dutyMemberNum);
       const gachaMemberList = getGachaMemberList(joinMemberList, historyMenberList, dutyMemberNum);
-      noticeMemberList = getDutyMemberList(gachaMemberList, dutyMemberNum);
+      const dutyMemberList = getDutyMemberList(gachaMemberList, dutyMemberNum);
+      msg = createNoticeMsg(dutyMemberList, true);
 
       const insertRow = sheet.getRange(historyDataColumnRangeStart + sheet.getMaxRows()).getNextDataCell(SpreadsheetApp.Direction.UP).getRow() + 1;
       const insertRange = historyDataColumnRangeStart + insertRow + ':' + historyDataColumnRangeEnd + insertRow;
-      const insertDataArr = createInsertData(noticeMemberList);
+      const insertDataArr = createInsertData(dutyMemberList);
       // スプレッドシートに当月当番データを書き込み
       sheet.getRange(insertRange).setValues(insertDataArr);
       // スプレッドシートに書き込んだ行に罫線を引く
-      sheet.getRange(insertRange).setBorder(false, true, true, true, true, false);
+      sheet.getRange(insertRange).setBorder(false, true, true, true, true, false); 
     }
-    var msg = createNoticeMsg(noticeMemberList);
-
   } catch (e) {
     var msg = 'エラーが発生しました：' + e.message + '\nfileName：' + e.fileName + '\nlineNumber：' + e.lineNumber + '\nstack：\n' + e.stack;
     Logger.log(msg);
@@ -167,11 +167,20 @@ function random(length) {
 }
 
 // Slack通知メッセージを作成して返す
-function createNoticeMsg(dutyMemberList) {
-  var noticeMsg = '';
-  dutyMemberList.forEach(function(memberData) {
-    noticeMsg += ':penguin:<ﾃﾞﾚﾚﾚﾚﾚﾃﾞﾃﾞﾝ!!　<' + memberData.id + '> さん\n';
-  });
+function createNoticeMsg(noticeMemberList, gachaFlg) {
+  var noticeMsg = '今月の当番\n';
+  // 新たにガチャを行った場合の通知メッセージ
+  if (gachaFlg) {
+    noticeMemberList.forEach(function(memberData) {
+      noticeMsg += ':penguin:<ﾃﾞﾚﾚﾚﾚﾚﾃﾞﾃﾞﾝ!!　<' + memberData.id + '> さん\n';
+    });
+  // 新たにガチャを行わなかった場合の通知メッセージ
+  } else {
+    noticeMemberList.forEach(function(memberData) {
+      noticeMsg += ':penguin:<ﾃﾞﾃﾞﾝ!!　<' + memberData.id + '> さん\n';
+    });
+    noticeMsg += '(すでに今月ガチャ済み)\n';
+  }
   return noticeMsg;
 }
 
