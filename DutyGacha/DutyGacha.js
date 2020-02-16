@@ -4,7 +4,7 @@ function doPost(e) {
   const verifyToken = PropertiesService.getScriptProperties().getProperty('SLACK_OUTGOING_TOKEN');
 
   if (verifyToken !== e.parameter.token) {
-    throw new Error("トークンが違います。");
+    throw new Error('トークンが違います。');
   }
   dutyGacha();
 }
@@ -82,8 +82,8 @@ function getFilterHistoryData(sheet, historyDataColumnRange) {
 
 // 当番履歴表に当月当番の情報があればそのメンバー名を、なければnullを返す
 function getThisMonthMemberNameList(filterHistoryData, lastIndex, dutyMemberNum) {
-  if (Utilities.formatDate(filterHistoryData[lastIndex][0], "JST", "yyyy/MM")
-                           === Utilities.formatDate(new Date(), "JST", "yyyy/MM")) {
+  if (Utilities.formatDate(filterHistoryData[lastIndex][0], 'JST', 'yyyy/MM')
+                           === Utilities.formatDate(new Date(), 'JST', 'yyyy/MM')) {
     const historyDataTargetNum = 1;
     return getHistoryMemberList(filterHistoryData, lastIndex, historyDataTargetNum, dutyMemberNum);
   } else {
@@ -95,7 +95,7 @@ function getThisMonthMemberNameList(filterHistoryData, lastIndex, dutyMemberNum)
 function getThisMonthMemberList(sheet, memberDataCellRange, thisMonthMemberNameList, dutyMemberNum) {
   const memberData = sheet.getRange(memberDataCellRange).getValues();
   let thisMonthMemberList = [];
-  memberData.map(function(data){
+  memberData.map(data => {
     if (thisMonthMemberNameList.includes(data[2])) {
       thisMonthMemberList.push({id: data[1], name: data[2]});
     }
@@ -123,7 +123,7 @@ function getJoinMemberList(sheet, memberDataCellRange, dutyMemberNum) {
 
 // 当番履歴表から指定件数分の履歴メンバーを抽出して配列で返す
 function getHistoryMemberList(filterHistoryData, lastIndex, historyDataTargetNum, dutyMemberNum) {
-  var historyMenberList = [];
+  let historyMenberList = [];
   for (let i = 0; i < historyDataTargetNum; i++) {
     for (let l = 1; l <= dutyMemberNum; l++) {
       if (filterHistoryData[lastIndex - i][l] === '') {
@@ -140,7 +140,7 @@ function getHistoryMemberList(filterHistoryData, lastIndex, historyDataTargetNum
 
 // ガチャ参加メンバーから履歴メンバーを除外したものを配列で返す
 function getGachaMemberList(joinMemberList, historyMenberList, dutyMemberNum) {
-  const gachaMemberList = joinMemberList.filter(data => historyMenberList.indexOf(data.name) === -1);
+  const gachaMemberList = joinMemberList.filter(data => !historyMenberList.includes(data.name));
   if (gachaMemberList.length < dutyMemberNum) {
     throw new Error('ガチャ参加メンバーから履歴メンバーを除外した数が、抽選する当番の人数より少ないです。ガチャ参加メンバーを増やしてください。'); 
   }
@@ -187,10 +187,8 @@ function createNoticeMsg(noticeMemberList, gachaFlg) {
 
 // スプレッドシートに記録する当月データの二次元配列を返す
 function createInsertData(dutyMemberList) {
-  let insertData = [Utilities.formatDate(new Date(), "JST", "yyyy/MM")];
-  dutyMemberList.forEach(function(memberData) {
-    insertData.push(memberData.name);
-  });
+  let insertData = [Utilities.formatDate(new Date(), 'JST', 'yyyy/MM')];
+  dutyMemberList.forEach(memberData => insertData.push(memberData.name));
   const insertDataArr = [insertData];
   return insertDataArr;
 }
