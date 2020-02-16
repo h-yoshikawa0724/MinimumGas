@@ -2,34 +2,44 @@
  * 掃除当番をランダムで決めて通知
  */
 function noticeCleaningDutyRandom() {
-  //連携するスプレッドシートのうち、グループ表のシート情報を取得
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("掃除当番グループ表");
-  //シートの全ての値を取得（二次元配列）
-  var data = sheet.getDataRange().getValues();
+  let msg;
+  try {
+    //連携するスプレッドシートのうち、グループ表のシート情報を取得
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('掃除当番グループ表');
+    //シートの全ての値を取得（二次元配列）
+    const data = sheet.getDataRange().getValues();
 
-  //掃除当番のグループ
-  var groupNames = ["A", "B", "C", "D", "E"];
-  //掃除当番を決定し、通知メッセージを生成
-  var msg = decideCleaningDuty(data, groupNames);
+    //掃除当番のグループ
+    const groupNames = ['A', 'B', 'C', 'D', 'E'];
+    //掃除当番を決定し、通知メッセージを生成
+    msg = decideCleaningDuty(data, groupNames);
+  } catch (e) {
+    msg = 'エラーが発生しました：' + '\nstack：\n' + e.stack;
+    Logger.log(msg);
+  }
 
-  //Slack側 Incoming WebHookのURL
-  var webHookUrl = PropertiesService.getScriptProperties().getProperty('WEBHOOK_URL');
-  //Incoming WebHookに渡すパラメータ
-  var jsonData =
-      {
-        "text": msg
-      };
-  //パラメータをJSONに変換
-  var payload = JSON.stringify(jsonData);
-  //送信オプション
-  var options =
-      {
-        "method": "post",
-        "contentType": "application/json",
-        "payload": payload
-      };
-  //指定URL、オプションでリクエスト
-  UrlFetchApp.fetch(webHookUrl, options);
+  try {
+    //Slack側 Incoming WebHookのURL
+    const WEBHOOK_URL = PropertiesService.getScriptProperties().getProperty('WEBHOOK_URL');
+    //Incoming WebHookに渡すパラメータ
+    const jsonData =
+        {
+          'text': msg
+        };
+    //パラメータをJSONに変換
+    const payload = JSON.stringify(jsonData);
+    //送信オプション
+    const options =
+        {
+          'method': 'post',
+          'contentType': 'application/json',
+          'payload': payload
+        };
+    //指定URL、オプションでリクエスト
+    UrlFetchApp.fetch(WEBHOOK_URL, options);
+  } catch (e) {
+    Logger.log('送信エラー：' + '\nstack：\n' + e.stack);
+  }
 }
 
 /**
@@ -39,15 +49,15 @@ function noticeCleaningDutyRandom() {
  * @return {string} 掃除当番通知メッセージ
  */
 function decideCleaningDuty(data, groupNames) {
-  var noticeMsg = "今週の掃除当番のお知らせ\n\n";
-  for (var i = 0; i < groupNames.length; i++) {
-    var groupNameRow = searchGroupNameRow(data, groupNames[i]);
-    var lastColumn = getLastColumn(data, groupNameRow);
-    var members = data[groupNameRow - 1].slice(2, lastColumn);
-    var numbers = toDraw(members.length);
-    noticeMsg += groupNames[i] + "：" + members[numbers[0]] + "・" + members[numbers[1]] + "\n";
+  let noticeMsg = '今週の掃除当番のお知らせ\n\n';
+  for (let i = 0; i < groupNames.length; i++) {
+    const groupNameRow = searchGroupNameRow(data, groupNames[i]);
+    const lastColumn = getLastColumn(data, groupNameRow);
+    const members = data[groupNameRow - 1].slice(2, lastColumn);
+    const numbers = toDraw(members.length);
+    noticeMsg += groupNames[i] + '：' + members[numbers[0]] + '・' + members[numbers[1]] + '\n';
   }
-  noticeMsg+= "\nよろしくお願いします。"
+  noticeMsg+= '\nよろしくお願いします。'
   return noticeMsg;
 }
 
@@ -58,17 +68,18 @@ function decideCleaningDuty(data, groupNames) {
  * @return {Number} 行番号
  */
 function searchGroupNameRow(data, groupName) {
-  for (var i = 0; i < data.length; i++) {
+  for (let i = 0; i < data.length; i++) {
     if (data[i][0] === groupName) {
       return i + 1;
     }
   }
+  throw new Error(groupName + 'グループのデータが見つかりませんでした。');
 }
 
 //指定した行の最終使用列番号を返す
 function getLastColumn(data, row) {
-  for (var i = 2; i <= data[row-1].length; i++) {
-    if (data[row-1][i] === undefined || data[row-1][i] === "") {
+  for (let i = 2; i <= data[row-1].length; i++) {
+    if (data[row-1][i] === undefined || data[row-1][i] === '') {
       return i;
     }
   }
@@ -76,7 +87,7 @@ function getLastColumn(data, row) {
 
 //掃除当番の抽選結果を返す
 function toDraw(length) {
-  var numbers = [];
+  let numbers = [];
   numbers[0] = random(length);
   do {
     numbers[1] = random(length);

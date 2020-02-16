@@ -3,40 +3,41 @@
  * ※他ファイルでも同名のメソッドがあるとうまく動かないことがある
  */
 function noticeCleaningDutyGroup() {
+  let msg;
   try {
     //連携するスプレッドシートのうち、グループ表のシート情報を取得
-    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("グループ表");
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('グループ表');
     //シートの事業部メンバー表の情報を取得（二次元配列）
-    var memberData = sheet.getRange(4, 1, 3, 11).getValues();
+    const memberData = sheet.getRange(4, 1, 3, 11).getValues();
     //シートの月ごとの当番対応表（二次元配列）
-    var dutyData = sheet.getRange(8, 2, 5, 2).getValues();
-    var msg = createNoticeMsg(memberData, dutyData);
+    const dutyData = sheet.getRange(8, 2, 5, 2).getValues();
+    msg = createNoticeMsg(memberData, dutyData);
   } catch (e) {
-    var msg = "エラーが発生しました：" + e.message + "\nfileName：" + e.fileName + "\nlineNumber：" + e.lineNumber + "\nstack：\n" + e.stack; 
+    msg = 'エラーが発生しました：' + '\nstack：\n' + e.stack; 
     Logger.log(msg);
   }
 
   try {
     //Slack側 Incoming WebHookのURL
-    var webHookUrl = PropertiesService.getScriptProperties().getProperty('WEBHOOK_URL');
+    const WEBHOOK_URL = PropertiesService.getScriptProperties().getProperty('WEBHOOK_URL');
     //Incoming WebHookに渡すパラメータ
-    var jsonData =
+    const jsonData =
         {
-          "text": msg
+          'text': msg
         };
     //パラメータをJSONに変換
-    var payload = JSON.stringify(jsonData);
+    const payload = JSON.stringify(jsonData);
     //送信オプション
-    var options =
+    const options =
         {
-          "method": "post",
-          "contentType": "application/json",
-          "payload": payload
+          'method': 'post',
+          'contentType': 'application/json',
+          'payload': payload
         };
     //指定URL、オプションでリクエスト
-    UrlFetchApp.fetch(webHookUrl, options);
+    UrlFetchApp.fetch(WEBHOOK_URL, options);
   } catch (e) {
-    Logger.log("送信エラー：" + e.message + "\nfileName：" + e.fileName + "\nlineNumber：" + e.lineNumber + "\nstack：\n" + e.stack);
+    Logger.log('送信エラー：' + '\nstack：\n' + e.stack);
   }
 }
 
@@ -47,17 +48,17 @@ function noticeCleaningDutyGroup() {
  * @return {string} 通知するメッセージ
  */
 function createNoticeMsg(memberData, dutyData) {
-  var noticeMsg = "今月の掃除当番のお知らせ\n\n";
-  var dutyName = searchDuty(dutyData);
-  noticeMsg += "「" + dutyName + "」です\n\n";
-  var dutyMember = searchDutymember(dutyName, memberData);
-  for (var i = 1; i < dutyMember.length; i++) {
+  let noticeMsg = '今月の掃除当番のお知らせ\n\n';
+  const dutyName = searchDuty(dutyData);
+  noticeMsg += '「' + dutyName + '」です\n\n';
+  const dutyMember = searchDutymember(dutyName, memberData);
+  for (let i = 1; i < dutyMember.length; i++) {
     noticeMsg += memberCheck(dutyMember[i]);
     if (i % 3 == 0) {
-      noticeMsg += "\n";
+      noticeMsg += '\n';
     }
   }
-  noticeMsg += "\n\nよろしくお願いします！";
+  noticeMsg += '\n\nよろしくお願いします！';
   return noticeMsg;
 }
 
@@ -67,13 +68,13 @@ function createNoticeMsg(memberData, dutyData) {
  * @return {string} 当番の事業部名
  */
 function searchDuty(dutyData) {
-  var month = Utilities.formatDate(new Date(), "JST", "M") + "月";
-  for (var i = 0; i < dutyData.length; i++) {
+  const month = Utilities.formatDate(new Date(), 'JST', 'M') + '月';
+  for (let i = 0; i < dutyData.length; i++) {
     if (month == dutyData[i][0]) {
-      return  "事業部" + dutyData[i][1];
+      return  '事業部' + dutyData[i][1];
     }
   }
-  throw new Error("月ごとの当番表のデータが不正です");
+  throw new Error('月ごとの当番表のデータが不正です');
 }
 
 /**
@@ -83,12 +84,12 @@ function searchDuty(dutyData) {
  * @return {string[]} 当番事業部のメンバーのデータ
  */
 function searchDutymember(dutyName, memberData) {
-  for (var i = 0; i < memberData.length; i++) {
+  for (let i = 0; i < memberData.length; i++) {
     if (dutyName == memberData[i][0]) {
       return memberData[i];
     }
   }
-  throw new Error("事業部のメンバー表データが不正です");
+  throw new Error('事業部のメンバー表データが不正です');
 }
 
 /**
@@ -97,8 +98,8 @@ function searchDutymember(dutyName, memberData) {
  * @return {string} 整形した当番の人の名称
  */
 function memberCheck(member) {
-  if (member == "") {
-    return "";
+  if (member == '') {
+    return '';
   }
-  return member + "さん  ";
+  return member + 'さん  ';
 }
